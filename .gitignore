@@ -39,3 +39,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database & user uploads
+prisma/*.db
+prisma/*.db-journal
+public/uploads/*
+!public/uploads/.gitkeep
+
+# archives
+*.zip
+*.tar.gz
+
+# testing & agent metadata
+playwright-report/
+test-results/
+.agents/
+.claude/
+.cursor/
+.devin/

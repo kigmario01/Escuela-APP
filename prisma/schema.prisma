@@ -1,0 +1,151 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Roles: "ADMIN", "MAESTRO", "ALUMNO"
+// EstadoAsistencia: "PRESENTE", "AUSENTE", "RETARDO", "JUSTIFICADO"
+// TipoAviso: "GENERAL", "GRUPO"
+
+model Usuario {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  apellido  String
+  rol       String   @default("ALUMNO") // ADMIN, MAESTRO, ALUMNO
+  foto      String?  // URL or path to profile photo
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  maestro Maestro?
+  alumno  Alumno?
+  avisos  Aviso[]
+  avisosLeidos AvisoLeido[]
+}
+
+model Maestro {
+  id           String         @id @default(cuid())
+  usuarioId    String         @unique
+  usuario      Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  especialidad String?
+  materias     MateriaGrupo[]
+}
+
+model Alumno {
+  id             String         @id @default(cuid())
+  usuarioId      String         @unique
+  usuario        Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  matricula      String         @unique
+  grupoId        String?
+  grupo          Grupo?         @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  asistencias    Asistencia[]
+  calificaciones Calificacion[]
+}
+
+model Grupo {
+  id                String             @id @default(cuid())
+  nombre            String // e.g. "3°A"
+  grado             Int
+  turno             String // "MATUTINO" or "VESPERTINO"
+  alumnos           Alumno[]
+  materias          MateriaGrupo[]
+  avisosDestinatario AvisoDestinatario[]
+}
+
+model Materia {
+  id          String         @id @default(cuid())
+  nombre      String
+  descripcion String?
+  clave       String         @unique
+  grupos      MateriaGrupo[]
+}
+
+model MateriaGrupo {
+  id             String         @id @default(cuid())
+  materiaId      String
+  materia        Materia        @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  grupoId        String
+  grupo          Grupo          @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  maestroId      String
+  maestro        Maestro        @relation(fields: [maestroId], references: [id], onDelete: Cascade)
+  asistencias    Asistencia[]
+  calificaciones Calificacion[]
+  horarios       Horario[]
+
+  @@unique([materiaId, grupoId])
+}
+
+model Asistencia {
+  id             String           @id @default(cuid())
+  alumnoId       String
+  alumno         Alumno           @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  materiaGrupoId String
+  materiaGrupo   MateriaGrupo     @relation(fields: [materiaGrupoId], references: [id], onDelete: Cascade)
+  fecha          DateTime
+  estado         String           // PRESENTE, AUSENTE, RETARDO, JUSTIFICADO
+
+  @@unique([alumnoId, materiaGrupoId, fecha])
+}
+
+model Calificacion {
+  id             String       @id @default(cuid())
+  alumnoId       String
+  alumno         Alumno       @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  materiaGrupoId String
+  materiaGrupo   MateriaGrupo @relation(fields: [materiaGrupoId], references: [id], onDelete: Cascade)
+  parcial        Int
+  calificacion   Float
+  observaciones  String?
+
+  @@unique([alumnoId, materiaGrupoId, parcial])
+}
+
+model Horario {
+  id             String       @id @default(cuid())
+  materiaGrupoId String
+  materiaGrupo   MateriaGrupo @relation(fields: [materiaGrupoId], references: [id], onDelete: Cascade)
+  diaSemana      String // LUNES-VIERNES
+  horaInicio     String // HH:mm format
+  horaFin        String // HH:mm format
+  salon          String?
+}
+
+model Aviso {
+  id            String              @id @default(cuid())
+  titulo        String
+  contenido     String
+  tipo          String              @default("GENERAL") // GENERAL, GRUPO
+  usuarioId     String
+  autor         Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  createdAt     DateTime            @default(now())
+  destinatarios AvisoDestinatario[]
+  leidoPor      AvisoLeido[]
+}
+
+model AvisoDestinatario {
+  id      String @id @default(cuid())
+  avisoId String
+  aviso   Aviso  @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+  grupoId String
+  grupo   Grupo  @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+
+  @@unique([avisoId, grupoId])
+}
+
+model AvisoLeido {
+  id        String   @id @default(cuid())
+  avisoId   String
+  aviso     Aviso    @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  leidoAt   DateTime @default(now())
+
+  @@unique([avisoId, usuarioId])
+}

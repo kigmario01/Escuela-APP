@@ -1,0 +1,46 @@
+services:
+  escuela-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: escuela-app
+    restart: unless-stopped
+    ports:
+      - "${PORT_EXTERNAL:-8081}:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-supersecretkey123456789_production_secret}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:8081}
+      - DATABASE_URL=file:./dev.db
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    volumes:
+      # Volúmenes para persistir la base de datos y las fotos subidas
+      - escuela_data:/app/prisma
+      - escuela_uploads:/app/public/uploads
+
+  # ==============================================================
+  # OPCIONAL: Si deseas migrar a PostgreSQL en producción,
+  # descomenta el siguiente servicio y actualiza DATABASE_URL
+  # en escuela-app a: postgresql://admin:password@postgres:5432/escuela
+  # ==============================================================
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: escuela-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: admin
+  #     POSTGRES_PASSWORD: password
+  #     POSTGRES_DB: escuela
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+volumes:
+  escuela_data:
+    driver: local
+  escuela_uploads:
+    driver: local
+  # postgres_data:
+  #   driver: local
