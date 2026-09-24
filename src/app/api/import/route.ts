@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import * as xlsx from 'xlsx';
 import bcrypt from 'bcryptjs';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.rol !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const url = new URL(request.url);
     const type = url.searchParams.get('type');
     

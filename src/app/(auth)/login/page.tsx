@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, GraduationCap, UserCheck } from "lucide-react";
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,13 +49,6 @@ export default function LoginPage() {
     performLogin(email, password);
   };
 
-  const handleQuickLogin = (demoEmail: string) => {
-    const pass = demoEmail === "admin@escuela.com" ? "admin123" : "password123";
-    setEmail(demoEmail);
-    setPassword(pass);
-    performLogin(demoEmail, pass);
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4">
       <Card className="w-full max-w-md shadow-lg border-slate-200">
@@ -72,7 +65,7 @@ export default function LoginPage() {
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="admin@escuela.com" 
+                placeholder="correo@escuela.com" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -102,51 +95,6 @@ export default function LoginPage() {
               {loading ? "Ingresando..." : "Iniciar Sesión"}
             </button>
           </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-500">Accesos Rápidos de Demo</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => handleQuickLogin("admin@escuela.com")}
-              disabled={loading}
-              className="flex flex-col h-auto py-2 items-center text-xs gap-1"
-            >
-              <Shield className="w-4 h-4 text-purple-600" />
-              <span>Admin</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => handleQuickLogin("m1@escuela.com")}
-              disabled={loading}
-              className="flex flex-col h-auto py-2 items-center text-xs gap-1"
-            >
-              <GraduationCap className="w-4 h-4 text-blue-600" />
-              <span>Maestro</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => handleQuickLogin("a1@escuela.com")}
-              disabled={loading}
-              className="flex flex-col h-auto py-2 items-center text-xs gap-1"
-            >
-              <UserCheck className="w-4 h-4 text-green-600" />
-              <span>Alumno</span>
-            </Button>
-          </div>
-          <p className="text-center text-xs text-slate-400">
-            Contraseña por defecto para demo: <code className="bg-slate-100 px-1 py-0.5 rounded">password123</code>
-          </p>
         </CardContent>
       </Card>
     </div>

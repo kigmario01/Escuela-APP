@@ -5,11 +5,8 @@ import type { NextRequest } from 'next/server';
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || 'supersecretkey123456789' });
-  if (pathname.startsWith('/admin') || pathname === '/login') {
-    console.log(`[MW] path: ${pathname}, token: ${token ? JSON.stringify({ email: token.email, rol: token.rol }) : 'null'}, cookies: ${req.cookies.getAll().map(c => c.name).join(', ')}`);
-  }
 
-  // Protect API routes except auth and seed
+  // Protect API routes except auth
   if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth') && !pathname.startsWith('/api/seed')) {
     if (!token) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -17,27 +14,43 @@ export async function middleware(req: NextRequest) {
   }
 
   // Redirect from login if already authenticated
-  if (pathname === '/login' && token) {
-    const rolePath = (token.rol as string)?.toLowerCase() || 'admin';
-    return NextResponse.redirect(new URL(`/${rolePath}`, req.url));
-  }
-
-  // Role-based protection for frontend pages
-  if (pathname.startsWith('/admin')) {
-    if (!token || token.rol !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/login', req.url));
+  if (pathname === '/login') {
+    if (token) {
+      const rolePath = (token.rol as string)?.toLowerCase() || 'admin';
+      return NextResponse.redirect(new URL(`/${rolePath}`, req.url));
     }
+    return NextResponse.next();
   }
 
-  if (pathname.startsWith('/maestro')) {
-    if (!token || token.rol !== 'MAESTRO') {
-      return NextResponse.redirect(new URL('/login', req.url));
+  // Frontend pages access control
+  const isProtectedPath = pathname.startsWith('/admin') || pathname.startsWith('/maestro') || pathname.startsWith('/alumno');
+
+  if (isProtectedPath) {
+    if (!token) {
+      // Clear potentially invalid cookies on unauthenticated access
+      const response = NextResponse.redirect(new URL('/login', req.url));
+      response.cookies.delete('next-auth.session-token');
+      response.cookies.delete('next-auth.callback-url');
+      response.cookies.delete('next-auth.csrf-token');
+      // For production (secure cookies)
+      response.cookies.delete('__Secure-next-auth.session-token');
+      response.cookies.delete('__Secure-next-auth.callback-url');
+      response.cookies.delete('__Host-next-auth.csrf-token');
+      return response;
     }
-  }
 
-  if (pathname.startsWith('/alumno')) {
-    if (!token || token.rol !== 'ALUMNO') {
-      return NextResponse.redirect(new URL('/login', req.url));
+    const rol = token.rol as string;
+    
+    if (pathname.startsWith('/admin') && rol !== 'ADMIN') {
+      return NextResponse.redirect(new URL(`/${rol.toLowerCase()}`, req.url));
+    }
+
+    if (pathname.startsWith('/maestro') && rol !== 'MAESTRO' && rol !== 'ADMIN') {
+      return NextResponse.redirect(new URL(`/${rol.toLowerCase()}`, req.url));
+    }
+
+    if (pathname.startsWith('/alumno') && rol !== 'ALUMNO' && rol !== 'ADMIN') {
+      return NextResponse.redirect(new URL(`/${rol.toLowerCase()}`, req.url));
     }
   }
 

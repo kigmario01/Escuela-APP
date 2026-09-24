@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, User } from "lucide-react";
+import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,8 +15,16 @@ import { signOut, useSession } from "next-auth/react";
 export function Header() {
   const { data: session } = useSession();
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: "/login" });
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirect: false });
+    } catch (err) {
+      console.error("Error al cerrar sesión:", err);
+    }
+    // Borrar cookies client-side para garantizar cierre de sesión inmediato
+    document.cookie = "next-auth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    document.cookie = "__Secure-next-auth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    window.location.href = "/login";
   };
 
   return (
@@ -56,8 +64,13 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-              Cerrar sesión
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              onSelect={handleLogout}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Cerrar sesión</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

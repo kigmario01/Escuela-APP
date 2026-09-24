@@ -26,9 +26,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Usuario no encontrado o inactivo");
         }
 
-        const isValidPassword =
-          (user.email === 'admin@escuela.com' && (credentials.password === 'admin123' || credentials.password === 'password123')) ||
-          (await bcrypt.compare(credentials.password, user.password));
+        const isValidPassword = await bcrypt.compare(credentials.password, user.password);
 
         if (!isValidPassword) {
           throw new Error("Contraseña incorrecta");
@@ -64,6 +62,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   pages: {
     signIn: "/login",

@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { 
   Users, BookOpen, Calendar, Bell, 
-  BarChart, Home, CheckSquare, GraduationCap, FileSpreadsheet, User, Layers, FileText
+  BarChart, Home, CheckSquare, GraduationCap, FileSpreadsheet, User, Layers, FileText, LogOut
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -51,6 +52,18 @@ export function Sidebar() {
 
   const links = menuItems[role];
 
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirect: false });
+    } catch (err) {
+      console.error("Error al cerrar sesión:", err);
+    }
+    // Borrar cookies client-side para garantizar cierre de sesión inmediato
+    document.cookie = "next-auth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    document.cookie = "__Secure-next-auth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    window.location.href = "/login";
+  };
+
   return (
     <div className="flex flex-col w-64 border-r bg-white h-full hidden md:flex">
       <div className="p-6">
@@ -77,6 +90,17 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Botón de Cerrar Sesión fijo en el pie del menú */}
+      <div className="p-4 border-t mt-auto">
+        <button
+          onClick={handleLogout}
+          className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-red-600 rounded-md hover:bg-red-50 active:bg-red-100 transition-colors"
+        >
+          <LogOut className="mr-3 h-5 w-5 text-red-500" />
+          <span>Cerrar sesión</span>
+        </button>
+      </div>
     </div>
   );
 }
